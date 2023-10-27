@@ -40,6 +40,7 @@ mutate(difference=hdi_2019-hdi_2010)
 gii_difference <- inequality_clean %>%
   select(iso3,country,hdicode,difference)
 ```
+#Remove the NA values 
 ```{r}
 clean_gii_difference <- na.omit(gii_difference)
 ```

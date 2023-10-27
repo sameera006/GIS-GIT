@@ -28,12 +28,25 @@ world_cities <- sf::st_read(here("wk4data", "World_Countries_Generalized", "Worl
 ```{r}
 inequality <- read_csv("wk4data/HDR21-22_Composite_indices_complete_time_series.csv", locale = locale(encoding = "latin1"), na = "")
 ```
-```
+
 ```{r}
 inequality_clean <- inequality %>%
-  janitor::clean_names()%>%
-  select(iso3,country,hdicode,hdi_2010,hdi_2011,hdi_2012,hdi_2013,hdi_2014,hdi_2015,hdi_2016,hdi_2017,hdi_2018,hdi_2019)
+  clean_names()%>%
+  select(iso3,country,hdicode,hdi_2010,hdi_2011,hdi_2012,hdi_2013,hdi_2014,hdi_2015,hdi_2016,hdi_2017,hdi_2018,hdi_2019) %>%
+mutate(difference=hdi_2019-hdi_2010)
+```
+```{r}
+gii_difference <- inequality_clean %>%
+  select(iso3,country,hdicode,difference)
+```
+```{r}
+clean_gii_difference <- na.omit(gii_difference)
+```
   
+```
+
+```{r}
+
 ```
 
 

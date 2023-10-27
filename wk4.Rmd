@@ -8,14 +8,37 @@ date: "2023-10-26"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 # Hi There!!
+#load the Packages
 ```{r}
 library(janitor)
-```
-```{r}
 library(sf)
+library(ggplot2)
+library(here)
+library(tidyverse)
+library(tmaptools)
+library(tmap)
+library(RSQLite)
+``` 
+# Read the File
+```{r}
+world_cities <- sf::st_read(here("wk4data", "World_Countries_Generalized", "World_Countries_Generalized.shp"))
+```
+
+
+```{r}
+inequality <- read_csv("wk4data/HDR21-22_Composite_indices_complete_time_series.csv", locale = locale(encoding = "latin1"), na = "")
+```
 ```
 ```{r}
-library(ggplot2)
+inequality_clean <- inequality %>%
+  janitor::clean_names()%>%
+  select(iso3,country,hdicode,hdi_2010,hdi_2011,hdi_2012,hdi_2013,hdi_2014,hdi_2015,hdi_2016,hdi_2017,hdi_2018,hdi_2019)
+  
+```
+
+
+```{r}
+
 ```
 
 ## R Markdown

@@ -13,6 +13,9 @@ library(janitor)
 ```{r}
 library(sf)
 ```
+```{r}
+library(ggplot2)
+```
 
 ## R Markdown
 

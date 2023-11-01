@@ -61,7 +61,7 @@ worlddata <- clean_names(world_cities)
 joined_data1 <- clean_names(joined_data)
 ```
 
-
+#Plotting the Data
 ```{r}
 
 tmap_mode("plot")

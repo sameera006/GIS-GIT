@@ -44,11 +44,26 @@ gii_difference <- inequality_clean %>%
 ```{r}
 clean_gii_difference <- na.omit(gii_difference)
 ```
-  
+```{r}
+joined_data <- worlddata %>% 
+  clean_names() %>%
+  left_join(., 
+            clean_gii_difference,
+            by = c("country" = "country"))
 ```
+```{r}
+worlddata <- clean_names(world_cities)
+```
+```{r}
+joined_data1 <- clean_names(joined_data)
+```
+
 
 ```{r}
 
+tmap_mode("plot")
+qtm(joined_data1, 
+    fill = "difference")
 ```
 
 

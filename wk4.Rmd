@@ -44,6 +44,7 @@ gii_difference <- inequality_clean %>%
 ```{r}
 clean_gii_difference <- na.omit(gii_difference)
 ```
+#Joining Spatial Data with Inequality Index
 ```{r}
 joined_data <- worlddata %>% 
   clean_names() %>%

@@ -1,0 +1,84 @@
+---
+title: "wk7"
+output: html_document
+date: "2023-12-07"
+---
+
+## Topic: Spatial Autocorrelation
+It is measure of similarity between nearby data.
+Now we will load the packages.
+
+```{r}
+library(here)
+library(janitor)
+library(tidyverse)
+library(sf)
+```
+load the data 
+#Londonwards
+```{r}
+londonwards <- st_read(here::here("wk5data","statistical-gis-boundaries-london","statistical-gis-boundaries-london","ESRI","London_Ward.shp"))
+```
+read the londonward merged data
+```{r}
+londonWardsMerged <- st_read(here::here("wk5data","statistical-gis-boundaries-london","statistical-gis-boundaries-london","ESRI","London_Ward_CityMerged.shp"))%>%
+  st_transform(.,27700)
+```
+read the csv file
+
+```{r}
+WardData <- read_csv("https://data.london.gov.uk/download/ward-profiles-and-atlas/772d2d64-e8c6-46cb-86f9-e52b4c7851bc/ward-profiles-excel-version.csv",
+                    locale = locale(encoding = "latin1"),
+                     na = c("NA", "n/a")) %>% 
+  clean_names()
+```
+Now we want to join the shape file with the csv file.
+we will do left join whch will not alter the left columns of the sahpe file.
+```{r}
+londonWardsMerged <- londonWardsMerged %>%
+  left_join(WardData,
+            by = c("GSS_CODE" ="new_code"))%>%
+   dplyr::distinct(GSS_CODE, .keep_all = T)%>%
+  dplyr::select(GSS_CODE, ward_name, average_gcse_capped_point_scores_2014)
+```
+
+```{r}
+st_crs(londonWardsMerged)
+```
+Plot the map to check whether all the points are inside and the map not outside the region.
+
+```{r}
+library(tmap)
+
+BluePlaques <- st_read(here::here("wk6data",
+                                  "open-plaques-london-2018-04-08.geojson")) %>%
+    st_transform(.,27700)
+```
+```{r}
+tmap_mode("plot")
+tm_shape(londonWardsMerged) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(BluePlaques) +
+  tm_dots(col = "blue")
+```
+After plotting we find some blue plaques fall outside London so we need to remove it before doing any analysis.
+##Data Cleaning
+```{r}
+summary(BluePlaques)
+```
+make a spatial subset which will remove the plaques outside london.
+```{r}
+BluePlaquesSub <- BluePlaques[londonWardsMerged,]
+```
+
+```{r}
+tm_shape(londonWardsMerged) +
+  tm_polygons(col = NA, alpha = 0.5) +
+tm_shape(BluePlaquesSub) +
+  tm_dots(col = "blue")
+```
+##Data manipulation
+
+
+
+

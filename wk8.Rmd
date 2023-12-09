@@ -1,0 +1,65 @@
+---
+title: "wk8"
+output: html_document
+date: "2023-12-09"
+---
+## Topic : Explaining Spatial Pattern -What factors might affect average score exam of 16year old across London.
+
+#Load the Packages
+```{r}
+library(tidyverse)
+library(tmap)
+library(geojsonio)
+library(plotly)
+library(rgdal)
+library(broom)
+install.packages("mapview")
+library(mapview)
+library(crosstalk)
+library(sf)
+library(sp)
+library(spdep)
+install.packages("car")
+library(car)
+library(fs)
+library(janitor)
+```
+#read the London Ward Shapefile
+
+```{r}
+Londonwards<-fs::dir_info(here::here("wk5data", 
+                                 "statistical-gis-boundaries-london", "statistical-gis-boundaries-london",
+                                 "ESRI"))%>%
+  #$ means exact match
+  dplyr::filter(str_detect(path, 
+                           "London_Ward_CityMerged.shp$"))%>%
+  dplyr::select(path)%>%
+  dplyr::pull()%>%
+  #read in the file in
+  sf::st_read()
+```
+#check the data
+```{r}
+qtm(Londonwards)
+```
+
+# Read the Ward Data
+
+```{r}
+#read in some attribute data
+LondonWardProfiles <- read_csv("https://data.london.gov.uk/download/ward-profiles-and-atlas/772d2d64-e8c6-46cb-86f9-e52b4c7851bc/ward-profiles-excel-version.csv", 
+                               col_names = TRUE, 
+                               locale = locale(encoding = 'Latin1'))
+```
+check thr data type of all the columns
+```{r}
+#check all of the columns have been read in correctly
+Datatypelist <- LondonWardProfiles %>% 
+  summarise_all(class) %>%
+  pivot_longer(everything(), 
+               names_to="All_variables", 
+               values_to="Variable_class")
+
+Datatypelist
+```
+

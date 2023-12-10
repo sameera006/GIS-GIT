@@ -62,4 +62,113 @@ Datatypelist <- LondonWardProfiles %>%
 
 Datatypelist
 ```
+#Cleaning the data- Removing the na values-Examining the dataset as it is read in above, you can see that a number of fields in the dataset that should have been read in as numeric data, have actually been read in as character (text) data beacuse of n/a values.
+
+```{r}
+LondonWardProfiles <- read_csv("https://data.london.gov.uk/download/ward-profiles-and-atlas/772d2d64-e8c6-46cb-86f9-e52b4c7851bc/ward-profiles-excel-version.csv", 
+                               na = c("", "NA", "n/a"), 
+                               locale = locale(encoding = 'Latin1'), 
+                               col_names = TRUE)
+```
+```{r}
+#check all of the columns have been read in correctly
+Datatypelist <- LondonWardProfiles %>% 
+  summarise_all(class) %>%
+  pivot_longer(everything(), 
+               names_to="All_variables", 
+               values_to="Variable_class")
+
+Datatypelist
+```
+#Joining both files LondonWardProfiles with Londonwards
+Now you have read in both your boundary data and your attribute data, you need to merge the two together using a common ID. In this case, we can use the ward codes to achieve the join
+
+```{r}
+#merge boundaries and data
+LonWardProfiles <- Londonwards%>%
+  st_join(.,
+            LondonWardProfiles, 
+            by = c("GSS_CODE" = "New code"))
+```
+
+Make a Map
+```{r}
+#let's map our dependent variable to see if the join has worked:
+tmap_mode("plot")
+qtm(LonWardProfiles, 
+    fill = "Average GCSE capped point scores - 2014", 
+    borders = NULL,  
+    fill.palette = "Blues")
+```
+Additional Data- add the school data of london 
+
+```{r}
+#might be a good idea to see where the secondary schools are in London too
+london_schools <- read_csv("https://data.london.gov.uk/download/london-schools-atlas/57046151-39a0-45d9-8dc0-27ea7fd02de8/all_schools_xy_2016.csv")
+
+#from the coordinate values stored in the x and y columns, which look like they are latitude and longitude values, create a new points dataset
+lon_schools_sf <- st_as_sf(london_schools, 
+                           coords = c("x","y"), 
+                           crs = 4326)
+
+lond_sec_schools_sf <- lon_schools_sf %>%
+  filter(PHASE=="Secondary")
+
+tmap_mode("plot")
+qtm(lond_sec_schools_sf)
+```
+#Research Question and Hypothesis:
+What are the Factors affecting the GCSE scores across London?
+
+My research hypothesis that I am going to test is that there are other observable factors occurring in Wards in London that might affect the average GCSE scores of students living in those areas.
+
+The null hypothesis is that there is no relation between exam scores and other observed variables.
+
+```{r}
+q <- qplot(x = `Unauthorised Absence in All Schools (%) - 2013`, 
+           y = `Average GCSE capped point scores - 2014`, 
+           data=LonWardProfiles)
+```
+
+```{r}
+#plot with a regression line - note, I've added some jitter here as the x-scale is rounded
+q + stat_smooth(method="lm", se=FALSE, size=1) + 
+  geom_jitter()
+```
+As it is, the scatter plot shows that, generally, as the  
+x
+  axis independent variable (unauthorised absence) goes up, our  
+y
+  axis dependent variable (GCSE point score) goes down. This is not a random cloud of points, but something that indicates there could be a relationshp here and so I might be looking to reject my null hypothesis.
+
+#Running the Linear Regression Model
+
+```{r}
+#run the linear regression model and store its outputs in an object called model1
+Regressiondata<- LonWardProfiles%>%
+  clean_names()%>%
+  dplyr::select(average_gcse_capped_point_scores_2014, 
+                unauthorised_absence_in_all_schools_percent_2013)
+
+#now model
+model1 <- Regressiondata %>%
+  lm(average_gcse_capped_point_scores_2014 ~
+               unauthorised_absence_in_all_schools_percent_2013,
+     data=.)
+```
+
+```{r}
+#show the summary of those outputs
+summary(model1)
+```
+```{r}
+library(broom)
+tidy(model1)
+```
+```{r}
+glance(model1)
+```
+  
+  
+
 

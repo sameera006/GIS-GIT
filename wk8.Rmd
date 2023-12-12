@@ -341,6 +341,127 @@ Correlation <- LonWardProfiles %>%
 #visualise the correlation matrix
 rplot(Correlation)
 ```
+#Variance Inflation Factor (VIF)
+Another way that we can check for Multicolinearity is to examine the VIF for the model. If we have VIF values for any variable exceeding 10, then we may need to worry and perhaps remove that variable from the analysis
+
+```{r}
+vif(model2)
+```
+If we wanted to add more variables into our model, it would be useful to check for multicollinearity amongst every variable we want to include, we can do this by computing a correlation matrix for the whole dataset or checking the VIF after running the model
+
+```{r}
+
+position <- c(10:74)
+
+Correlation_all<- LonWardProfiles %>%
+  st_drop_geometry()%>%
+  dplyr::select(position)%>%
+    correlate()
+```
+```{r}
+rplot(Correlation_all)
+```
+#Homoscadesicity
+
+```{r}
+#print some model diagnositcs. 
+par(mfrow=c(2,2))    #plot to 2 by 2 array
+plot(model2)
+```
+```{r}
+install.packages("performance")
+library(performance)
+
+check_model(model2, check="all")
+```
+#Assumption 5 - Independence of Errors
+
+```{r}
+#run durbin-watson test
+DW <- durbinWatsonTest(model2)
+tidy(DW)
+```
+Spatial Autocorrelation-map the residuals
+
+```{r}
+#now plot the residuals
+tmap_mode("view")
+#qtm(LonWardProfiles, fill = "model1_resids")
+
+tm_shape(LonWardProfiles) +
+  tm_polygons("model2resids",
+              palette = "RdYlBu") +
+tm_shape(lond_sec_schools_sf) + tm_dots(col = "TYPE")
+
+```
+```{r}
+#calculate the centroids of all Wards in London
+coordsW <- LonWardProfiles%>%
+  st_centroid()%>%
+  st_geometry()
+
+plot(coordsW)
+```
+```{r}
+#Now we need to generate a spatial weights matrix 
+#(remember from the lecture a couple of weeks ago). 
+#We'll start with a simple binary matrix of queen's case neighbours
+
+LWard_nb <- LonWardProfiles %>%
+  poly2nb(., queen=T)
+
+#or nearest neighbours
+knn_wards <-coordsW %>%
+  knearneigh(., k=4)
+
+LWard_knn <- knn_wards %>%
+  knn2nb()
+
+#plot them
+plot(LWard_nb, st_geometry(coordsW), col="red")
+```
+```{r}
+plot(LWard_knn, st_geometry(coordsW), col="blue")
+```
+```{r}
+#create a spatial weights matrix object from these weights
+
+Lward.queens_weight <- LWard_nb %>%
+  nb2listw(., style="W")
+
+Lward.knn_4_weight <- LWard_knn %>%
+  nb2listw(., style="W")
+```
+# Moran's I using Queen Neighbours
+
+```{r}
+Queen <- LonWardProfiles %>%
+  st_drop_geometry()%>%
+  dplyr::select(model2resids)%>%
+  pull()%>%
+  moran.test(., Lward.queens_weight)%>%
+  tidy()
+```
+
+#Then Nearest K-Neighbour
+
+```{r}
+Nearest_neighbour <- LonWardProfiles %>%
+  st_drop_geometry()%>%
+  dplyr::select(model2resids)%>%
+  pull()%>%
+  moran.test(., Lward.knn_4_weight)%>%
+  tidy()
+
+Queen
+```
+```{r}
+Nearest_neighbour
+```
+Observing the Moran’s I statistic for both Queen’s case neighbours and k-nearest neighbours of 4, we can see that the Moran’s I statistic is somewhere between 0.27 and 0.29. Remembering that Moran’s I ranges from between -1 and +1 (0 indicating no spatial autocorrelation) we can conclude that there is some weak to moderate spatial autocorrelation in our residuals.
+
+This means that despite passing most of the assumptions of linear regression, we could have a situation here where the presence of some spatial autocorrelation could be leading to biased estimates of our parameters and significance values.
+
 
 
 
